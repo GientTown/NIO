@@ -7,15 +7,49 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import org.junit.Test;
 
 public class ChannelTest {
+
+	// 字符集：编码与解码
+	@Test
+	public void test5() throws IOException {
+		Charset charset = Charset.forName("utf-8");
+		// 获取编码器
+		CharsetEncoder encoder = charset.newEncoder();
+		// 获取解码器
+		CharsetDecoder decoder = charset.newDecoder();
+		// 获取缓冲区
+		CharBuffer cBuf = CharBuffer.allocate(1024);
+		cBuf.put("字符集：编码与解码！");
+		System.out.println(cBuf.position());
+		System.out.println(cBuf.limit());
+		cBuf.flip();
+		System.out.println(cBuf.position());
+		System.out.println(cBuf.limit());
+
+		// 编码
+		ByteBuffer bBuf = encoder.encode(cBuf);
+		for (int i = 0; i < bBuf.limit(); i++) {
+			System.out.println(bBuf.get());
+		}
+		bBuf.flip();
+		
+		//解码
+		CharBuffer charBuffer = decoder.decode(bBuf);
+		System.out.println(charBuffer.toString());
+	}
 
 	// 分散读取，聚集写入
 	@Test
@@ -34,11 +68,11 @@ public class ChannelTest {
 		System.out.println(new String(bufs[0].array(), 0, bufs[0].limit()));
 		System.out.println("----------");
 		System.out.println(new String(bufs[1].array(), 0, bufs[1].limit()));
-		//聚集写入
+		// 聚集写入
 		RandomAccessFile accessFile2 = new RandomAccessFile("./sqll.txt", "rw");
 		FileChannel outChannel = accessFile2.getChannel();
 		outChannel.write(bufs);
-		
+
 		outChannel.close();
 		inChannel.close();
 
