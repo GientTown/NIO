@@ -2,15 +2,60 @@ package com.gient.buffer;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import org.junit.Test;
 
 public class ChannelTest {
-
-	//使用非直接缓冲区实现文件复制
+	
+	//通道之间的数据传输（直接缓冲区）
+	@Test
+	public void test3() throws IOException{
+		FileChannel inChannel = FileChannel.open(
+				Paths.get("./1.jpg"), StandardOpenOption.READ);
+		
+		FileChannel outChannel = FileChannel.open(
+				Paths.get("./2.jpg"), StandardOpenOption.WRITE,
+				StandardOpenOption.READ,StandardOpenOption.CREATE_NEW);
+		
+		// inChannel.transferTo(0, inChannel.size(), outChannel);
+		outChannel.transferFrom(inChannel, 0, inChannel.size());
+		
+		outChannel.close();
+		inChannel.close();
+	}
+	
+	//使用直接缓冲区实现文件复制（内存映射文件）
+	@Test
+	public void test2() throws IOException{
+		FileChannel inChannel = FileChannel.open(
+				Paths.get("./1.jpg"), StandardOpenOption.READ);
+		
+		FileChannel outChannel = FileChannel.open(
+				Paths.get("./2.jpg"), StandardOpenOption.WRITE,
+				StandardOpenOption.READ,StandardOpenOption.CREATE_NEW);
+		//内存映射文件
+		MappedByteBuffer inMapBuf = inChannel.map(MapMode.READ_ONLY, 0, inChannel.size());
+		MappedByteBuffer outMapBuf = outChannel.map(MapMode.READ_WRITE, 0, inChannel.size());
+		
+		byte[] dst = new byte[1024];
+		
+		//直接对缓冲区数据进行读写操作
+		inMapBuf.get(dst);
+		outMapBuf.put(dst);
+		
+		outChannel.close();
+		inChannel.close();
+	}
+	
+	//使用通道实现文件复制（非直接缓冲区）
 	@Test
 	public void test() throws Exception {
 		FileOutputStream fos = null;
